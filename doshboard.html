@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IoT Smart Home Dashboard — ควบคุมอุปกรณ์ LED และตรวจสอบเซ็นเซอร์แบบเรียลไทม์">
+    <title>✨ Lovely Home — Smart Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* =============================================
+           DESIGN TOKENS
+           ============================================= */
+        :root {
+            --font-th: 'Kanit', sans-serif;
+            --font-en: 'Space Grotesk', sans-serif;
+            --radius-sm: 14px;
+            --radius-md: 22px;
+            --radius-lg: 30px;
+            --radius-pill: 100px;
+            --glass-blur: blur(20px);
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --t-fast: 0.25s;
+            --t-normal: 0.4s;
+            --t-slow: 0.6s;
+        }
+
+        [data-theme="dark"] {
+            --bg-base: #020617;
+            --bg-surface: #0f172a;
+            --bg-card: rgba(15, 23, 42, 0.7);
+            --bg-card-hover: rgba(30, 41, 59, 0.85);
+            --bg-input: rgba(30, 41, 59, 0.6);
+            --text-1: #f8fafc;
+            --text-2: #94a3b8;
+            --text-3: #64748b;
+            --accent-1: #38bdf8; /* sky */
+            --accent-2: #2dd4bf; /* teal */
+            --accent-3: #818cf8; /* indigo */
+            --accent-4: #34d399; /* emerald */
+            --accent-5: #fbbf24; /* amber */
+            --accent-6: #f43f5e; /* rose */
+            --glow-1: rgba(56, 189, 248, 0.15);
+            --glow-2: rgba(45, 212, 191, 0.15);
+            --glow-on: rgba(251, 191, 36, 0.25);
+            --border: rgba(56, 189, 248, 0.12);
+            --border-on: rgba(251, 191, 36, 0.3);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 40px rgba(251, 191, 36, 0.2), 0 0 80px rgba(251, 191, 36, 0.08);
+            --mesh-1: radial-gradient(ellipse at 20% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 60%);
+            --mesh-2: radial-gradient(ellipse at 80% 100%, rgba(45, 212, 191, 0.1) 0%, transparent 60%);
+            --mesh-3: radial-gradient(ellipse at 60% 50%, rgba(129, 140, 248, 0.06) 0%, transparent 50%);
+        }
+
+        [data-theme="light"] {
+            --bg-base: #f8fafc;
+            --bg-surface: #f1f5f9;
+            --bg-card: rgba(255, 255, 255, 0.7);
+            --bg-card-hover: rgba(255, 255, 255, 0.9);
+            --bg-input: rgba(241, 245, 249, 0.8);
+            --text-1: #0f172a;
+            --text-2: #475569;
+            --text-3: #94a3b8;
+            --accent-1: #0ea5e9;
+            --accent-2: #0d9488;
+            --accent-3: #6366f1;
+            --accent-4: #10b981;
+            --accent-5: #f59e0b;
+            --accent-6: #e11d48;
+            --glow-1: rgba(14, 165, 233, 0.1);
+            --glow-2: rgba(13, 148, 136, 0.1);
+            --glow-on: rgba(245, 158, 11, 0.2);
+            --border: rgba(14, 165, 233, 0.1);
+            --border-on: rgba(245, 158, 11, 0.3);
+            --shadow-card: 0 4px 24px rgba(15, 23, 42, 0.08);
+            --shadow-glow: 0 0 30px rgba(245, 158, 11, 0.15), 0 0 60px rgba(245, 158, 11, 0.06);
+            --mesh-1: radial-gradient(ellipse at 20% 0%, rgba(14, 165, 233, 0.06) 0%, transparent 60%);
+            --mesh-2: radial-gradient(ellipse at 80% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 60%);
+            --mesh-3: radial-gradient(ellipse at 60% 50%, rgba(99, 102, 241, 0.04) 0%, transparent 50%);
+        }
+
+        /* =============================================
+           GLOBAL RESET
+           ============================================= */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-th);
+            background: var(--bg-base);
+            color: var(--text-1);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background var(--t-normal) var(--ease-smooth), color var(--t-normal) var(--ease-smooth);
+        }
+
+        /* Mesh gradient background */
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: var(--mesh-1), var(--mesh-2), var(--mesh-3);
+            transition: background var(--t-slow) var(--ease-smooth);
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .orb-1 {
+            width: 300px; height: 300px;
+            background: var(--accent-1);
+            top: -60px; left: -60px;
+            animation: orbDrift1 20s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 250px; height: 250px;
+            background: var(--accent-2);
+            bottom: -40px; right: -40px;
+            animation: orbDrift2 25s ease-in-out infinite;
+        }
+        .orb-3 {
+            width: 200px; height: 200px;
+            background: var(--accent-3);
+            top: 40%; left: 60%;
+            animation: orbDrift3 18s ease-in-out infinite;
+        }
+
+        @keyframes orbDrift1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(60px, 80px) scale(1.1); }
+            50% { transform: translate(120px, 40px) scale(0.9); }
+            75% { transform: translate(30px, 100px) scale(1.05); }
+        }
+        @keyframes orbDrift2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-80px, -60px) scale(1.12); }
+            66% { transform: translate(-30px, -100px) scale(0.88); }
+        }
+        @keyframes orbDrift3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-60px, 50px) scale(1.15); }
+        }
+
+        /* =============================================
+           SCROLLBAR
+           ============================================= */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-1); border-radius: 10px; }
+
+        /* =============================================
+           APP SHELL
+           ============================================= */
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px 20px 80px;
+        }
+
+        /* =============================================
+           HEADER — Floating pill style
+           ============================================= */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 12px 12px 24px;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            box-shadow: var(--shadow-card);
+            margin-bottom: 28px;
+            gap: 10px;
+            flex-wrap: wrap;
+            animation: slideDown 0.7s var(--ease-bounce) both;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border-radius: 50%;
+            font-size: 1.2rem;
+            animation: heartPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes heartPulse {
+            0%, 100% { transform: scale(1); }
+            10% { transform: scale(1.15); }
+            20% { transform: scale(1); }
+            30% { transform: scale(1.1); }
+            40% { transform: scale(1); }
+        }
+
+        .brand-text {
+            font-family: var(--font-en);
+            font-size: 1.15rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            background: var(--bg-card);
+            color: var(--text-2);
+            font-family: var(--font-th);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--t-fast) var(--ease-smooth);
+            white-space: nowrap;
+        }
+
+        .pill-btn:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .pill-btn:active { transform: scale(0.96); }
+
+        .pill-btn .ic { font-size: 1rem; transition: transform var(--t-normal) var(--ease-bounce); }
+        .pill-btn.spinning .ic { animation: spin360 0.8s ease; }
+
+        @keyframes spin360 { to { transform: rotate(360deg); } }
+
+        .pill-btn.auto-on {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            color: #fff;
+            border-color: transparent;
+        }
+        .pill-btn.auto-on .heart-icon { animation: heartbeat 1.2s ease-in-out infinite; }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            14% { transform: scale(1.3); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.2); }
+        }
+
+        /* Connection status */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--accent-4);
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+        .status-pill.offline {
+            color: var(--accent-6);
+            background: rgba(251, 113, 133, 0.1);
+            border-color: rgba(251, 113, 133, 0.2);
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: blink 2s ease-in-out infinite;
+        }
+        .status-pill.offline .status-dot { animation: none; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* =============================================
+           GREETING HERO
+           ============================================= */
+        .hero {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 28px 32px;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            margin-bottom: 32px;
+            overflow: hidden;
+            position: relative;
+            animation: fadeUp 0.8s var(--ease-bounce) 0.1s both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, var(--glow-1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-avatar {
+            font-size: 3.8rem;
+            animation: float 4s ease-in-out infinite;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: transform var(--t-normal) var(--ease-bounce);
+        }
+        .hero-avatar:active {
+            animation: bounceJoy 0.6s var(--ease-bounce);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-8px) rotate(-2deg); }
+            75% { transform: translateY(-4px) rotate(2deg); }
+        }
+
+        @keyframes bounceJoy {
+            0% { transform: scale(1) rotate(0); }
+            20% { transform: scale(1.3) rotate(-10deg); }
+            40% { transform: scale(0.9) rotate(5deg); }
+            60% { transform: scale(1.1) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        .hero-body { flex: 1; position: relative; z-index: 1; }
+
+        .hero-greeting {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .hero-greeting .highlight {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: 0.88rem;
+            color: var(--text-3);
+            line-height: 1.6;
+        }
+
+        .hero-time {
+            font-family: var(--font-en);
+            font-size: 0.78rem;
+            color: var(--text-3);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* =============================================
+           STATS ROW
+           ============================================= */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 20px;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-card);
+            transition: all var(--t-fast) var(--ease-smooth);
+            animation: fadeUp 0.8s var(--ease-bounce) calc(0.15s * var(--i)) both;
+        }
+        .stat-chip:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-card), 0 0 20px var(--glow-1);
+        }
+
+        .stat-icon {
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: var(--radius-sm);
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .stat-info .stat-num {
+            font-family: var(--font-en);
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .stat-info .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-3);
+            margin-top: 3px;
+        }
+
+        /* =============================================
+           SECTION HEADER
+           ============================================= */
+        .sec-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding-left: 4px;
+        }
+        .sec-head .sec-emoji { font-size: 1.3rem; }
+        .sec-head h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .sec-head .sec-badge {
+            font-family: var(--font-en);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: var(--radius-pill);
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+            color: #fff;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        /* =============================================
+           LED CONTROL CARDS
+           ============================================= */
+        .led-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .led-card {
+            position: relative;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+            transition: all var(--t-normal) var(--ease-smooth);
+            overflow: hidden;
+            animation: fadeUp 0.8s var(--ease-bounce) calc(0.1s * var(--i)) both;
+        }
+
+        .led-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-3));
+            opacity: 0.6;
+            transition: all var(--t-normal) var(--ease-smooth);
+        }
+
+        .led-card.is-on {
+            border-color: var(--border-on);
+            box-shadow: var(--shadow-glow);
+        }
+        .led-card.is-on::before {
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-5), var(--accent-6));
+            opacity: 1;
+        }
+
+        .led-card:hover {
+            transform: translateY(-4px) scale(1.01);
+        }
+
+        .led-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .led-bulb {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+            background: var(--bg-surface);
+            transition: all var(--t-normal) var(--ease-smooth);
+            position: relative;
+        }
+
+        .led-card.is-on .led-bulb {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            box-shadow: 0 0 24px rgba(253, 230, 138, 0.6), 0 0 48px rgba(253, 230, 138, 0.25);
+            animation: bulbGlow 2.5s ease-in-out infinite;
+        }
+
+        @keyframes bulbGlow {
+            0%, 100% { box-shadow: 0 0 24px rgba(253, 230, 138, 0.5), 0 0 48px rgba(253, 230, 138, 0.2); }
+            50% { box-shadow: 0 0 36px rgba(253, 230, 138, 0.8), 0 0 64px rgba(253, 230, 138, 0.35); }
+        }
+
+        /* Gorgeous toggle */
+        .toggle {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            cursor: pointer;
+        }
+        .toggle input { display: none; }
+
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: var(--text-3);
+            border-radius: var(--radius-pill);
+            transition: all var(--t-normal) var(--ease-smooth);
+        }
+
+        .toggle-thumb {
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 26px; height: 26px;
+            background: #fff;
+            border-radius: 50%;
+            transition: all var(--t-normal) var(--ease-bounce);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .toggle input:checked ~ .toggle-track {
+            background: linear-gradient(135deg, var(--accent-5), var(--accent-6));
+        }
+        .toggle input:checked ~ .toggle-thumb {
+            left: 31px;
+        }
+
+        .led-name {
+            font-family: var(--font-en);
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .led-meta {
+            display: flex;
+            gap: 14px;
+            font-size: 0.78rem;
+            color: var(--text-3);
+            margin-top: 4px;
+        }
+
+        .led-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 14px;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: var(--font-en);
+            margin-top: 14px;
+            letter-spacing: 0.5px;
+            transition: all var(--t-fast) var(--ease-smooth);
+        }
+        .led-status-badge.off {
+            background: rgba(122, 106, 146, 0.12);
+            color: var(--text-3);
+        }
+        .led-status-badge.on {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(251, 113, 133, 0.18));
+            color: var(--accent-5);
+        }
+
+        /* =============================================
+           SENSOR GAUGE CARDS
+           ============================================= */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .sensor-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 28px 16px 22px;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+            transition: all var(--t-normal) var(--ease-smooth);
+            animation: fadeUp 0.8s var(--ease-bounce) calc(0.1s * var(--i)) both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sensor-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            transition: all var(--t-normal);
+        }
+
+        .sensor-card:nth-child(1)::after { background: linear-gradient(90deg, var(--accent-6), var(--accent-5)); }
+        .sensor-card:nth-child(2)::after { background: linear-gradient(90deg, var(--accent-3), var(--accent-1)); }
+        .sensor-card:nth-child(3)::after { background: linear-gradient(90deg, var(--accent-4), var(--accent-3)); }
+
+        .sensor-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-card), 0 0 30px var(--glow-1);
+        }
+
+        /* Ring gauge */
+        .ring-wrap {
+            position: relative;
+            width: 130px; height: 130px;
+            margin: 0 auto 14px;
+        }
+
+        .ring-svg {
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: var(--bg-surface);
+            stroke-width: 8;
+        }
+
+        .ring-fill {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.2s var(--ease-smooth), stroke 0.5s ease;
+            filter: drop-shadow(0 0 6px currentColor);
+        }
+
+        .ring-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-value {
+            font-family: var(--font-en);
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            display: block;
+        }
+
+        .ring-unit {
+            font-size: 0.75rem;
+            color: var(--text-3);
+            margin-top: 2px;
+            display: block;
+        }
+
+        .sensor-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-2);
+        }
+
+        .sensor-pin {
+            font-size: 0.72rem;
+            color: var(--text-3);
+            margin-top: 3px;
+            font-family: var(--font-en);
+        }
+
+        .sensor-status-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: var(--accent-4);
+            margin-top: 8px;
+        }
+        .sensor-status-dot::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent-4);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        /* =============================================
+           SIMULATOR / ADD DATA FORM
+           ============================================= */
+        .form-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 40px;
+            animation: fadeUp 0.8s var(--ease-bounce) 0.2s both;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-2);
+        }
+
+        .field select,
+        .field input[type="text"] {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-input);
+            color: var(--text-1);
+            font-family: var(--font-th);
+            font-size: 0.88rem;
+            outline: none;
+            transition: all var(--t-fast) var(--ease-smooth);
+            -webkit-appearance: none;
+        }
+
+        .field select:focus,
+        .field input[type="text"]:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px var(--glow-1);
+        }
+
+        .slider-field { display: flex; flex-direction: column; gap: 6px; }
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-row input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, var(--accent-3), var(--accent-1), var(--accent-2));
+            outline: none;
+        }
+
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .slider-row input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        .slider-val {
+            font-family: var(--font-en);
+            font-weight: 600;
+            font-size: 0.95rem;
+            min-width: 50px;
+            text-align: right;
+            color: var(--accent-2);
+        }
+
+        .btn-submit {
+            padding: 11px 28px;
+            border: none;
+            border-radius: var(--radius-pill);
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            color: white;
+            font-family: var(--font-th);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--t-fast) var(--ease-smooth);
+            box-shadow: 0 4px 20px rgba(192, 132, 252, 0.3);
+            white-space: nowrap;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(192, 132, 252, 0.45);
+        }
+        .btn-submit:active { transform: scale(0.96); }
+
+        /* =============================================
+           HISTORY TABLE
+           ============================================= */
+        .history-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 40px;
+            overflow-x: auto;
+            animation: fadeUp 0.8s var(--ease-bounce) 0.3s both;
+        }
+
+        .htable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.85rem;
+        }
+
+        .htable thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-3);
+            border-bottom: 2px solid var(--border);
+            font-family: var(--font-en);
+        }
+
+        .htable tbody tr {
+            transition: all var(--t-fast) var(--ease-smooth);
+        }
+        .htable tbody tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .htable tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-2);
+        }
+
+        .type-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: var(--radius-pill);
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: var(--font-en);
+            letter-spacing: 0.3px;
+        }
+        .type-tag.temp { background: rgba(251, 113, 133, 0.15); color: var(--accent-6); }
+        .type-tag.hum { background: rgba(56, 189, 248, 0.15); color: var(--accent-3); }
+        .type-tag.soil { background: rgba(52, 211, 153, 0.15); color: var(--accent-4); }
+        .type-tag.led { background: rgba(251, 191, 36, 0.15); color: var(--accent-5); }
+        .type-tag.default { background: rgba(192, 132, 252, 0.12); color: var(--accent-1); }
+
+        .btn-del {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px; height: 32px;
+            border: 1px solid rgba(251, 113, 133, 0.2);
+            border-radius: 50%;
+            background: rgba(251, 113, 133, 0.08);
+            color: var(--accent-6);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all var(--t-fast) var(--ease-smooth);
+        }
+        .btn-del:hover {
+            background: rgba(251, 113, 133, 0.2);
+            transform: scale(1.1);
+        }
+        .btn-del:active { transform: scale(0.9); }
+
+        /* =============================================
+           TOAST NOTIFICATIONS
+           ============================================= */
+        .toast-container {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 22px;
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-card);
+            font-size: 0.88rem;
+            color: var(--text-1);
+            animation: toastIn 0.5s var(--ease-bounce) both;
+            max-width: 360px;
+        }
+
+        .toast.success { border-left: 4px solid var(--accent-4); }
+        .toast.error { border-left: 4px solid var(--accent-6); }
+        .toast.info { border-left: 4px solid var(--accent-3); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(40px) scale(0.9); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        .toast.out {
+            animation: toastOut 0.4s var(--ease-smooth) forwards;
+        }
+
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateX(40px) scale(0.9); }
+        }
+
+        /* =============================================
+           LOADING SKELETON
+           ============================================= */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-card-hover) 50%, var(--bg-surface) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius-sm);
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* =============================================
+           FOOTER
+           ============================================= */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-3);
+            font-size: 0.8rem;
+        }
+        .footer a {
+            color: var(--accent-1);
+            text-decoration: none;
+        }
+        .footer .heart { color: var(--accent-2); animation: heartbeat 1.5s ease-in-out infinite; display: inline-block; }
+
+        /* =============================================
+           RESPONSIVE
+           ============================================= */
+        @media (max-width: 768px) {
+            .app { padding: 12px 12px 60px; }
+            .topbar { border-radius: var(--radius-md); padding: 10px 14px; }
+            .hero { flex-direction: column; text-align: center; padding: 24px 20px; }
+            .hero-avatar { font-size: 3rem; }
+            .led-grid { grid-template-columns: 1fr; }
+            .sensor-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .form-row { grid-template-columns: 1fr; }
+            .brand-text { font-size: 0.95rem; }
+        }
+
+        @media (max-width: 400px) {
+            .stats-row { grid-template-columns: 1fr; }
+            .topbar-actions { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="mesh-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="app">
+        <!-- TOP BAR -->
+        <header class="topbar" id="topbar">
+            <div class="brand">
+                <div class="brand-icon">💜</div>
+                <span class="brand-text">Lovely Home</span>
+            </div>
+            <div class="topbar-actions">
+                <div class="status-pill" id="statusPill">
+                    <span class="status-dot"></span>
+                    <span id="statusText">เชื่อมต่อแล้ว</span>
+                </div>
+                <button class="pill-btn" id="btnRefresh" onclick="manualRefresh()">
+                    <span class="ic">🔄</span> รีเฟรช
+                </button>
+                <button class="pill-btn" id="btnAuto" onclick="toggleAutoRefresh()">
+                    <span class="heart-icon">💗</span> Auto
+                </button>
+                <button class="pill-btn" id="btnTheme" onclick="toggleTheme()">
+                    <span class="ic" id="themeIcon">☀️</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- HERO GREETING -->
+        <section class="hero">
+            <div class="hero-avatar" id="heroAvatar" onclick="this.style.animation='bounceJoy 0.6s var(--ease-bounce)'; setTimeout(()=>this.style.animation='float 4s ease-in-out infinite',600)">🏡</div>
+            <div class="hero-body">
+                <h1 class="hero-greeting" id="heroGreeting">สวัสดี, <span class="highlight">ยินดีต้อนรับกลับบ้าน</span> 💜</h1>
+                <p class="hero-sub" id="heroSub">ระบบพร้อมทำงาน — ควบคุมอุปกรณ์ทุกชิ้นได้จากที่เดียว</p>
+                <div class="hero-time">
+                    <span>🕐</span>
+                    <span id="liveTime">--:--:--</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATS ROW -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-chip" style="--i:1">
+                <div class="stat-icon" style="background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,113,133,0.1));">💡</div>
+                <div class="stat-info">
+                    <span class="stat-num" id="statLeds">0</span>
+                    <span class="stat-label">อุปกรณ์ LED</span>
+                </div>
+            </div>
+            <div class="stat-chip" style="--i:2">
+                <div class="stat-icon" style="background: linear-gradient(135deg, rgba(52,211,153,0.15), rgba(56,189,248,0.1));">📡</div>
+                <div class="stat-info">
+                    <span class="stat-num" id="statSensors">0</span>
+                    <span class="stat-label">เซ็นเซอร์</span>
+                </div>
+            </div>
+            <div class="stat-chip" style="--i:3">
+                <div class="stat-icon" style="background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(244,114,182,0.1));">⚡</div>
+                <div class="stat-info">
+                    <span class="stat-num" id="statActive">0</span>
+                    <span class="stat-label">กำลังทำงาน</span>
+                </div>
+            </div>
+            <div class="stat-chip" style="--i:4">
+                <div class="stat-icon" style="background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(192,132,252,0.1));">🔗</div>
+                <div class="stat-info">
+                    <span class="stat-num" id="statTotal">0</span>
+                    <span class="stat-label">ทั้งหมด</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- LED SECTION -->
+        <div class="sec-head">
+            <span class="sec-emoji">💡</span>
+            <h2>ควบคุม LED</h2>
+            <span class="sec-badge">Realtime</span>
+        </div>
+        <div class="led-grid" id="ledGrid">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- SENSOR SECTION -->
+        <div class="sec-head">
+            <span class="sec-emoji">📊</span>
+            <h2>เซ็นเซอร์</h2>
+            <span class="sec-badge">Live</span>
+        </div>
+        <div class="sensor-grid" id="sensorGrid">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- SIMULATOR -->
+        <div class="sec-head">
+            <span class="sec-emoji">🧪</span>
+            <h2>จำลองค่าเซ็นเซอร์</h2>
+        </div>
+        <div class="form-card">
+            <div class="form-row">
+                <div class="field">
+                    <label>📌 เลือกเซ็นเซอร์</label>
+                    <select id="simSensor">
+                        <option value="">— เลือก —</option>
+                    </select>
+                </div>
+                <div class="slider-field">
+                    <label>📈 ค่าที่จะส่ง</label>
+                    <div class="slider-row">
+                        <input type="range" id="simSlider" min="0" max="100" value="50" oninput="document.getElementById('simVal').textContent=this.value">
+                        <span class="slider-val" id="simVal">50</span>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <button class="btn-submit" onclick="submitSensorData()">✨ ส่งค่า</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTORY TABLE -->
+        <div class="sec-head">
+            <span class="sec-emoji">📜</span>
+            <h2>ประวัติอุปกรณ์</h2>
+        </div>
+        <div class="history-card">
+            <table class="htable" id="historyTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ชื่ออุปกรณ์</th>
+                        <th>ประเภท</th>
+                        <th>PIN</th>
+                        <th>สถานะ</th>
+                        <th>เวลา</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <p>สร้างด้วย <span class="heart">♥</span> — <strong>Lovely Home</strong> IoT Dashboard</p>
+            <p style="margin-top: 4px; font-size: 0.72rem;">API: <a href="http://tc.sbtc-mng.com/api.php" target="_blank">tc.sbtc-mng.com</a></p>
+        </footer>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        /* =============================================
+           CONFIGURATION
+           ============================================= */
+        const API_URL = 'http://tc.sbtc-mng.com/api.php';
+        let autoRefreshInterval = null;
+        let isAutoRefresh = false;
+        let deviceData = [];
+
+        /* =============================================
+           INIT
+           ============================================= */
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            updateGreeting();
+            fetchDevices();
+        });
+
+        /* =============================================
+           THEME TOGGLE
+           ============================================= */
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.getElementById('themeIcon').textContent = next === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', next);
+        }
+
+        // Restore saved theme
+        (function() {
+            const saved = localStorage.getItem('theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+                if (saved === 'light') document.getElementById('themeIcon').textContent = '🌙';
+            }
+        })();
+
+        /* =============================================
+           LIVE CLOCK & GREETING
+           ============================================= */
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('liveTime').textContent = now.toLocaleTimeString('th-TH', { hour12: false });
+        }
+
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            let greet, emoji;
+            if (hour < 6) { greet = 'ดึกแล้วนะ'; emoji = '🌙'; }
+            else if (hour < 12) { greet = 'อรุณสวัสดิ์'; emoji = '🌅'; }
+            else if (hour < 17) { greet = 'สวัสดีตอนบ่าย'; emoji = '☀️'; }
+            else if (hour < 20) { greet = 'สวัสดีตอนเย็น'; emoji = '🌆'; }
+            else { greet = 'สวัสดีตอนค่ำ'; emoji = '✨'; }
+
+            document.getElementById('heroGreeting').innerHTML =
+                `${greet}, <span class="highlight">ยินดีต้อนรับกลับบ้าน</span> ${emoji}`;
+        }
+
+        /* =============================================
+           API FETCH
+           ============================================= */
+        async function fetchDevices() {
+            try {
+                const res = await fetch(API_URL);
+                const json = await res.json();
+
+                if (json.success && json.data) {
+                    deviceData = json.data;
+                    setOnline(true);
+                    renderAll(json.data);
+                    showToast('โหลดข้อมูลสำเร็จ 💜', 'success');
+                } else {
+                    setOnline(false);
+                    showToast('ไม่พบข้อมูลจาก API', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                setOnline(false);
+                showToast('ไม่สามารถเชื่อมต่อ API ได้', 'error');
+            }
+        }
+
+        function setOnline(online) {
+            const pill = document.getElementById('statusPill');
+            const txt = document.getElementById('statusText');
+            if (online) {
+                pill.classList.remove('offline');
+                txt.textContent = 'เชื่อมต่อแล้ว';
+            } else {
+                pill.classList.add('offline');
+                txt.textContent = 'ออฟไลน์';
+            }
+        }
+
+        /* =============================================
+           RENDER ALL
+           ============================================= */
+        function renderAll(data) {
+            const leds = data.filter(d => d.device_type === 'LED');
+            const sensors = data.filter(d => d.device_type === 'SENSOR');
+
+            renderStats(leds, sensors, data);
+            renderLEDs(leds);
+            renderSensors(sensors);
+            renderSensorSelect(sensors);
+            renderHistory(data);
+        }
+
+        /* =============================================
+           STATS
+           ============================================= */
+        function renderStats(leds, sensors, all) {
+            animateNumber('statLeds', leds.length);
+            animateNumber('statSensors', sensors.length);
+            const active = all.filter(d => d.status === 'ON' || d.status === 'ACTIVE').length;
+            animateNumber('statActive', active);
+            animateNumber('statTotal', all.length);
+        }
+
+        function animateNumber(id, target) {
+            const el = document.getElementById(id);
+            const start = parseInt(el.textContent) || 0;
+            const duration = 600;
+            const startTime = performance.now();
+
+            function tick(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(start + (target - start) * eased);
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        /* =============================================
+           RENDER LEDs
+           ============================================= */
+        function renderLEDs(leds) {
+            const grid = document.getElementById('ledGrid');
+            grid.innerHTML = leds.map((led, i) => {
+                const isOn = led.status === 'ON';
+                return `
+                <div class="led-card ${isOn ? 'is-on' : ''}" style="--i:${i + 1}" id="led-card-${led.id}">
+                    <div class="led-top">
+                        <div class="led-bulb">${isOn ? '💡' : '🔌'}</div>
+                        <label class="toggle">
+                            <input type="checkbox" ${isOn ? 'checked' : ''}
+                                onchange="toggleLed('${led.id}', '${led.device_name}', this.checked)">
+                            <div class="toggle-track"></div>
+                            <div class="toggle-thumb">${isOn ? '🌟' : ''}</div>
+                        </label>
+                    </div>
+                    <div class="led-name">${led.device_name}</div>
+                    <div class="led-meta">
+                        <span>📍 PIN ${led.pin}</span>
+                        <span>🆔 #${led.id}</span>
+                    </div>
+                    <div class="led-status-badge ${isOn ? 'on' : 'off'}">
+                        ${isOn ? '🔆 ON — กำลังเปิด' : '⭘ OFF — ปิดอยู่'}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        /* =============================================
+           TOGGLE LED
+           ============================================= */
+        async function toggleLed(id, name, checked) {
+            const newStatus = checked ? 'ON' : 'OFF';
+            const card = document.getElementById(`led-card-${id}`);
+
+            try {
+                const form = new FormData();
+                form.append('action', 'update');
+                form.append('id', id);
+                form.append('status', newStatus);
+
+                const res = await fetch(API_URL, { method: 'POST', body: form });
+                const json = await res.json();
+
+                if (json.success) {
+                    if (checked) {
+                        card.classList.add('is-on');
+                    } else {
+                        card.classList.remove('is-on');
+                    }
+
+                    // Update bulb icon and thumb
+                    card.querySelector('.led-bulb').textContent = checked ? '💡' : '🔌';
+                    card.querySelector('.toggle-thumb').textContent = checked ? '🌟' : '';
+                    card.querySelector('.led-status-badge').className = `led-status-badge ${checked ? 'on' : 'off'}`;
+                    card.querySelector('.led-status-badge').innerHTML = checked ? '🔆 ON — กำลังเปิด' : '⭘ OFF — ปิดอยู่';
+
+                    showToast(`${name} → ${newStatus} สำเร็จ ✨`, 'success');
+
+                    // Refresh stats
+                    fetchDevices();
+                } else {
+                    showToast(`ไม่สามารถเปลี่ยนสถานะ ${name} ได้`, 'error');
+                    // Revert toggle
+                    card.querySelector('input[type="checkbox"]').checked = !checked;
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+                card.querySelector('input[type="checkbox"]').checked = !checked;
+            }
+        }
+
+        /* =============================================
+           RENDER SENSORS
+           ============================================= */
+        function renderSensors(sensors) {
+            const grid = document.getElementById('sensorGrid');
+            const sensorConfig = {
+                'Temperature': { color: 'var(--accent-6)', unit: '°C', max: 60, emoji: '🌡️' },
+                'Humidity': { color: 'var(--accent-3)', unit: '%', max: 100, emoji: '💧' },
+                'Soil Moisture': { color: 'var(--accent-4)', unit: '%', max: 100, emoji: '🌱' }
+            };
+
+            grid.innerHTML = sensors.map((s, i) => {
+                const cfg = sensorConfig[s.device_name] || { color: 'var(--accent-1)', unit: '', max: 100, emoji: '📡' };
+                const value = Math.floor(Math.random() * cfg.max * 0.6 + cfg.max * 0.2); // Simulated value
+                const circumference = 2 * Math.PI * 52;
+                const offset = circumference - (value / cfg.max) * circumference;
+
+                return `
+                <div class="sensor-card" style="--i:${i + 1}">
+                    <div class="ring-wrap">
+                        <svg class="ring-svg" viewBox="0 0 120 120">
+                            <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                            <circle class="ring-fill" cx="60" cy="60" r="52"
+                                style="stroke: ${cfg.color};
+                                       stroke-dasharray: ${circumference};
+                                       stroke-dashoffset: ${offset};"
+                            />
+                        </svg>
+                        <div class="ring-center">
+                            <span class="ring-value" style="color: ${cfg.color}">${value}</span>
+                            <span class="ring-unit">${cfg.unit}</span>
+                        </div>
+                    </div>
+                    <div class="sensor-name">${cfg.emoji} ${s.device_name}</div>
+                    <div class="sensor-pin">PIN ${s.pin} · ID #${s.id}</div>
+                    <div class="sensor-status-dot">${s.status}</div>
+                </div>`;
+            }).join('');
+        }
+
+        /* =============================================
+           SENSOR SELECT
+           ============================================= */
+        function renderSensorSelect(sensors) {
+            const sel = document.getElementById('simSensor');
+            sel.innerHTML = '<option value="">— เลือกเซ็นเซอร์ —</option>' +
+                sensors.map(s => `<option value="${s.id}">${s.device_name} (PIN ${s.pin})</option>`).join('');
+        }
+
+        /* =============================================
+           SUBMIT SENSOR DATA
+           ============================================= */
+        async function submitSensorData() {
+            const sensorId = document.getElementById('simSensor').value;
+            const value = document.getElementById('simSlider').value;
+
+            if (!sensorId) {
+                showToast('กรุณาเลือกเซ็นเซอร์ก่อน 📌', 'error');
+                return;
+            }
+
+            try {
+                const form = new FormData();
+                form.append('action', 'update');
+                form.append('id', sensorId);
+                form.append('status', value);
+
+                const res = await fetch(API_URL, { method: 'POST', body: form });
+                const json = await res.json();
+
+                if (json.success) {
+                    showToast(`อัปเดตค่าเซ็นเซอร์เป็น ${value} สำเร็จ 🎉`, 'success');
+                    fetchDevices();
+                } else {
+                    showToast('ไม่สามารถส่งค่าได้', 'error');
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
+            }
+        }
+
+        /* =============================================
+           RENDER HISTORY TABLE
+           ============================================= */
+        function renderHistory(data) {
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = data.map(d => {
+                let tagClass = 'default';
+                if (d.device_name.includes('Temp')) tagClass = 'temp';
+                else if (d.device_name.includes('Hum')) tagClass = 'hum';
+                else if (d.device_name.includes('Soil')) tagClass = 'soil';
+                else if (d.device_type === 'LED') tagClass = 'led';
+
+                return `
+                <tr>
+                    <td style="font-family:var(--font-en);font-weight:600;">#${d.id}</td>
+                    <td>${d.device_name}</td>
+                    <td><span class="type-tag ${tagClass}">${d.device_type}</span></td>
+                    <td style="font-family:var(--font-en);">${d.pin}</td>
+                    <td style="font-weight:600; color: ${d.status === 'ON' || d.status === 'ACTIVE' ? 'var(--accent-4)' : 'var(--text-3)'};">
+                        ${d.status}
+                    </td>
+                    <td style="font-size:0.78rem;color:var(--text-3);">${d.created_at}</td>
+                    <td>
+                        <button class="btn-del" onclick="deleteDevice('${d.id}')" title="ลบ">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        /* =============================================
+           DELETE DEVICE
+           ============================================= */
+        async function deleteDevice(id) {
+            if (!confirm('ต้องการลบรายการนี้?')) return;
+
+            try {
+                const form = new FormData();
+                form.append('action', 'delete');
+                form.append('id', id);
+
+                const res = await fetch(API_URL, { method: 'POST', body: form });
+                const json = await res.json();
+
+                if (json.success) {
+                    showToast('ลบสำเร็จแล้ว 🗑️', 'success');
+                    fetchDevices();
+                } else {
+                    showToast('ไม่สามารถลบได้', 'error');
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการลบ', 'error');
+            }
+        }
+
+        /* =============================================
+           REFRESH CONTROLS
+           ============================================= */
+        function manualRefresh() {
+            const btn = document.getElementById('btnRefresh');
+            btn.classList.add('spinning');
+            fetchDevices();
+            setTimeout(() => btn.classList.remove('spinning'), 900);
+        }
+
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('btnAuto');
+            isAutoRefresh = !isAutoRefresh;
+
+            if (isAutoRefresh) {
+                btn.classList.add('auto-on');
+                autoRefreshInterval = setInterval(fetchDevices, 5000);
+                showToast('เปิด Auto Refresh (5 วินาที) 💗', 'info');
+            } else {
+                btn.classList.remove('auto-on');
+                clearInterval(autoRefreshInterval);
+                showToast('ปิด Auto Refresh แล้ว', 'info');
+            }
+        }
+
+        /* =============================================
+           TOAST SYSTEM
+           ============================================= */
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${msg}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('out');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
