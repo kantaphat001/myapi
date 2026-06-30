@@ -1192,7 +1192,10 @@
         /* =============================================
            CONFIGURATION
            ============================================= */
-        const API_URL = 'http://tc.sbtc-mng.com/api.php';
+        // ตรวจสอบว่าเปิดเว็บผ่าน HTTPS (เช่น บน Vercel) หรือไม่ เพื่อดักทางปัญหา Mixed Content
+        const isSecure = window.location.protocol === 'https:';
+        // ถ้าเป็น HTTPS (Vercel) ให้ยิง API ไปที่ Proxy (ตั้งค่าใน vercel.json) ถ้าไม่ใช่ให้ยิงตรงๆ
+        const API_URL = isSecure ? '/api/proxy' : 'http://tc.sbtc-mng.com/api.php';
         let autoRefreshInterval = null;
         let isAutoRefresh = false;
         let deviceData = [];
